@@ -1,0 +1,10 @@
+lib/
+*.log
+metastore_db/
+bin/
+project/
+target/
+.cache
+.classpath
+.project
+.settings
