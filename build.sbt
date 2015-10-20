@@ -16,6 +16,8 @@ libraryDependencies += "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.
 
 libraryDependencies += "com.fasterxml.jackson.module" % "jackson-module-scala_2.10" % "2.6.1"
 
+libraryDependencies += "com.sksamuel.elastic4s" %% "elastic4s-core" % "1.7.4"
+
 scalacOptions += "-deprecation"
 
 
