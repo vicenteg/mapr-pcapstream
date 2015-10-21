@@ -21,6 +21,10 @@ Use the `submit.sh` script like so, if you’re running locally:
 
 Parquet files will appear under the output directory.
 
+There’s also a script for running tcpdump, edit it and examine the options, noting that the interface selection is probably not very portable at this point (works on my mac, might not on Linux):
+
+    ./run_tcpdump.sh
+
 
 TODO
 =====
