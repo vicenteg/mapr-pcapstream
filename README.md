@@ -5,6 +5,23 @@ Captures happen via either a Corvil appliance or Solarcapture software and get w
 
 Eventually, this will hopefully be able to deal with very high ingest rate, multiple 40Gbps interfaces being captured.
 
+Building
+====
+
+You need sbt (http://www.scala-sbt.org/).
+
+    sbt package
+
+Running
+====
+
+Use the `submit.sh` script like so, if you’re running locally:
+
+    ./submit.sh file:///Users/vince/pcap/2015/10/21  file:///Users/vince/flowdata/output
+
+Parquet files will appear under the output directory.
+
+
 TODO
 =====
 
