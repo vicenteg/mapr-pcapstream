@@ -10,7 +10,7 @@ TODO
 
 * Output the flow data as parquet
 
-** Include a directory path for the files
+* Include a directory path for the files
 
 * Good naming convention for the pcap filenames so we can pull them back
 
