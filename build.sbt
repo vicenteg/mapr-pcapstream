@@ -12,9 +12,13 @@ libraryDependencies += "org.apache.spark" % "spark-streaming_2.10" % "1.4.1"
 
 libraryDependencies += "org.apache.spark" %% "spark-core" % "1.4.1"
 
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "1.4.1"
+
 libraryDependencies += "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.3"
 
 libraryDependencies += "com.fasterxml.jackson.module" % "jackson-module-scala_2.10" % "2.6.1"
+
+libraryDependencies += "com.googlecode.json-simple" % "json-simple" % "1.1.1"
 
 libraryDependencies += "com.sksamuel.elastic4s" %% "elastic4s-core" % "1.7.4"
 
