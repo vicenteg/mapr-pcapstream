@@ -16,7 +16,7 @@ import com.mapr.sample.WholeFileInputFormat
 import edu.gatech.sjpcap._
 
 object PcapStream {
-  case class FlowData(timestampMillis: Long, srcIP: InetAddress, dstIP: InetAddress, srcPort: Integer, dstPort: Integer, protocol: String, length: Integer, captureFilename: String)
+  case class FlowData(timestampMillis: Long, srcIP: String, dstIP: String, srcPort: Integer, dstPort: Integer, protocol: String, length: Integer, captureFilename: String)
 
   def main(args: Array[String]) {
     val inputPath = args(0)
@@ -62,7 +62,13 @@ object PcapStream {
             yield (flowData.get)
     }
 
-    packets.saveAsTextFiles(outputPath)
+    packets.foreachRDD(rdd => {
+      if (rdd.count() > 0) {
+        val df = sqlContext.createDataFrame(rdd)
+        df.write.parquet(outputPath + "/" + System.currentTimeMillis())
+      }
+    })
+    //packets.saveAsTextFiles(outputPath)
 
     ssc.start()
     ssc.awaitTermination()
@@ -87,8 +93,8 @@ object PcapStream {
 
   def extractFlowData(packet: Packet, filename: Option[String] = Some("")): Option[FlowData] = {
     packet match {
-      case t: TCPPacket => Some(new FlowData(t.timestamp, t.src_ip, t.dst_ip, t.src_port, t.dst_port, "TCP", t.data.length, filename.get))
-      case u: UDPPacket => Some(new FlowData(u.timestamp, u.src_ip, u.dst_ip, u.src_port, u.dst_port, "UDP", u.data.length, filename.get))
+      case t: TCPPacket => Some(new FlowData(t.timestamp, t.src_ip.toString, t.dst_ip.toString, t.src_port, t.dst_port, "TCP", t.data.length, filename.get))
+      case u: UDPPacket => Some(new FlowData(u.timestamp, u.src_ip.toString, u.dst_ip.toString, u.src_port, u.dst_port, "UDP", u.data.length, filename.get))
       case _ => None
     }
   }

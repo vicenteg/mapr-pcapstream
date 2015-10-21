@@ -12,7 +12,7 @@ TODO
 
 * Push flow data onto a Kafka/Marlin topic for pull by ES?
 
-* Output the flow data as parquet for query by BI tools
+* ~~Output the flow data as parquet for query by BI tools~~
 
 * Include a directory path for the files
 
