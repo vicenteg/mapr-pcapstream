@@ -5,8 +5,8 @@
 
 # linux
 IF=$(netstat -rn | egrep '^(default|0.0.0.0)' | tr -s ' ' | cut -f 8 -d ' ')
-FILE_LIMIT=30
-TIME_LIMIT=10
+FILE_LIMIT=50
+TIME_LIMIT=20
 CAPTURE_DIR_FORMAT="$HOME/pcap/%Y/%m/%d"
 CAPTURE_FILE_FORMAT=".dump-%H%M%S"
 CAPTURE_DIR=$(date +"$CAPTURE_DIR_FORMAT")

@@ -31,23 +31,11 @@ object PcapStream {
     val output = outputPath
     val directoryFormat = new SimpleDateFormat("yyyy/MMM/dd/HHmmss")
 
-
-    // val jobConf = new JobConf(ssc.sparkContext.hadoopConfiguration)
     val jobConf = new JobConf(sc.hadoopConfiguration)
     jobConf.setJobName("PCAP Stream Processing")
     FileInputFormat.setInputPaths(jobConf, input)
 
     val pcapBytes = ssc.fileStream[NullWritable, BytesWritable, WholeFileInputFormat](directory = input)
-
-    //val pcapBytes = sc.newAPIHadoopRDD(jobConf, classOf[WholeFileInputFormat], classOf[NullWritable], classOf[BytesWritable])
-
-    /* Can't cast UnionRDD to NewHadoopRDD, so there's no clean way to get the input filename. Will try to infer it externally with directories. */
-    /*
-    val hadoopRdd = pcapBytes.foreachRDD(rdd => rdd.asInstanceOf[NewHadoopRDD[NullWritable,BytesWritable]].mapPartitionsWithInputSplit { ( inputSplit, iterator) =>
-      val file = inputSplit.asInstanceOf[FileSplit]
-      iterator.map { tpl => (file.getPath.toString, tpl._2) }
-    })
-    */
 
     val packets = pcapBytes.flatMap {
         case (filename, packet) =>
@@ -67,7 +55,6 @@ object PcapStream {
         df.write.parquet(out)
       }
     })
-    //packets.saveAsTextFiles(outputPath)
 
     ssc.start()
     ssc.awaitTermination()
