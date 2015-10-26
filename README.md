@@ -90,10 +90,13 @@ select
     cast(to_timestamp(cast(timestampMillis/1000 as bigint)) as date) as tsDate,
     date_part('hour', to_timestamp(cast(timestampMillis/1000 as bigint))) as tsHour,
     date_part('minute', to_timestamp(cast(timestampMillis/1000 as bigint))) as tsMinute,
+    date_part('second', to_timestamp(cast(timestampMillis/1000 as bigint))) as tsSecond,
     timestampMillis,
-    srcPort,dstPort,
+    srcPort,
+    dstPort,
     length,
-    count(*) over(partition by timestampMillis) as countPerMinute 
+    count(*) over(partition by timestampMillis) as countPerMilli,
+    avg(length) over(partition by timestampMillis) as avgLengthPerMilli 
   from dfs.`/user/vgonzalez/pcap/out/flows`;
 ```
 
