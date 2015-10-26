@@ -1,5 +1,6 @@
 .idea/
 lib/
+lib_managed/
 *.log
 metastore_db/
 bin/
