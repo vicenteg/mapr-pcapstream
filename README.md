@@ -42,7 +42,7 @@ Notice that the input directory is at the end of a pathname that has the pcap fi
 
 ### Output
 
-Parquet files will appear under the output directory in a subdirectory called `flows`. Other data may appear in other subdirectories later as functionality gets added. The data in the `flows` directory will be partitioned by date as well. The date partitions are there to help with query in Drill. They also help us to locate the files associated with a particular timeframe.
+Parquet files will appear under the output directory in a subdirectory called `flows`. Other data can appear in other subdirectories later as functionality gets added. The data in the `flows` directory will be partitioned by date as well. The date partitions are there to help with query in Drill. They also help us to locate the files associated with a particular timeframe.
 
 ## Start the monitor_and_move script
 
@@ -56,8 +56,7 @@ Anyway, run the script:
 
 If you have not yet started tcpdump via the script below, `monitor_and_move` will pace back and forth impatiently until the input directory is created.
 
-## 
-Start tcpdump
+## Start tcpdump
 
 Having configured `env.sh` above, you can use the supplied tcpdump script to run tcpdump. Edit the script and examine the options, noting that the interface selection in `env.sh` may need some tweaks.
 
