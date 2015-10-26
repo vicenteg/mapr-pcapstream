@@ -66,12 +66,37 @@ Having configured `env.sh` above, you can use the supplied tcpdump script to run
 
 # Now what?
 
+## YARN & Spark Application GUI
+
 On your resourcemanager GUI, find the running application. You should see an application with the name `com.mapr.pcapstream.PcapStream`. Once you find that line, locate the "Tracking UI" column (you may need to scroll right). Click the ApplicationMaster link.
 
 Now you should be looking at the Spark application UI. Have a look around.
 
 Under the Jobs tab, click on the Event Timeline link. Check out the timeline view of the streaming job. If tcpdump has seen any data, you should see some little blue boxes appearing at somewhat regular intervals. Click on one of the small blue boxes and have a look at the job the box represents. 
 
+## Drill
+
+Since the streaming job is kicking out Parquet files, why not make the data available to BI tools via Drill? Fire up sqlline and try something like this on the output directory:
+
+```sql
+select count(1) from dfs.`/user/vgonzalez/pcap/out/flows`;
+```
+
+Run it a few times, and see that the count changes. That's of course because we're creating new Parquet files with each streaming batch.
+
+And a more complex query to see the packet count per millisecond:
+
+```sql
+select 
+    cast(to_timestamp(cast(timestampMillis/1000 as bigint)) as date) as tsDate,
+    date_part('hour', to_timestamp(cast(timestampMillis/1000 as bigint))) as tsHour,
+    date_part('minute', to_timestamp(cast(timestampMillis/1000 as bigint))) as tsMinute,
+    timestampMillis,
+    srcPort,dstPort,
+    length,
+    count(*) over(partition by timestampMillis) as countPerMinute 
+  from dfs.`/user/vgonzalez/pcap/out/flows`;
+```
 
 # TODO
 
