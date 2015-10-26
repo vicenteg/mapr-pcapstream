@@ -1,6 +1,8 @@
 package com.mapr.pcapstream
 
-import java.net.InetAddress
+import java.util.Date
+import java.nio.file.Paths
+import java.text.SimpleDateFormat
 
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark._
@@ -8,9 +10,6 @@ import org.apache.spark._
 import org.apache.hadoop.io.{BytesWritable, NullWritable}
 import org.apache.hadoop.mapred.FileInputFormat
 import org.apache.hadoop.mapred.JobConf
-
-import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper}
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
 import com.mapr.sample.WholeFileInputFormat
 import edu.gatech.sjpcap._
@@ -30,17 +29,15 @@ object PcapStream {
 
     val input = inputPath
     val output = outputPath
+    val directoryFormat = new SimpleDateFormat("yyyy/MMM/dd/HHmmss")
 
-    val mapper = new ObjectMapper()
-    mapper.registerModule(DefaultScalaModule)
-    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
     // val jobConf = new JobConf(ssc.sparkContext.hadoopConfiguration)
     val jobConf = new JobConf(sc.hadoopConfiguration)
     jobConf.setJobName("PCAP Stream Processing")
     FileInputFormat.setInputPaths(jobConf, input)
 
-    val pcapBytes = ssc.fileStream[NullWritable, BytesWritable, WholeFileInputFormat](input)
+    val pcapBytes = ssc.fileStream[NullWritable, BytesWritable, WholeFileInputFormat](directory = input)
 
     //val pcapBytes = sc.newAPIHadoopRDD(jobConf, classOf[WholeFileInputFormat], classOf[NullWritable], classOf[BytesWritable])
 
@@ -64,8 +61,10 @@ object PcapStream {
 
     packets.foreachRDD(rdd => {
       if (rdd.count() > 0) {
+        val date = new Date()
+        val out = Paths.get(outputPath, directoryFormat.format(date)).toString
         val df = sqlContext.createDataFrame(rdd)
-        df.write.parquet(outputPath + "/" + System.currentTimeMillis())
+        df.write.parquet(out)
       }
     })
     //packets.saveAsTextFiles(outputPath)
@@ -97,9 +96,5 @@ object PcapStream {
       case u: UDPPacket => Some(new FlowData(u.timestamp, u.src_ip.toString, u.dst_ip.toString, u.src_port, u.dst_port, "UDP", u.data.length, filename.get))
       case _ => None
     }
-  }
-
-  def headerToJson(mapper: ObjectMapper, flowData: FlowData): String = {
-    mapper.writeValueAsString(flowData)
   }
 }
