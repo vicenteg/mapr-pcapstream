@@ -116,7 +116,7 @@ select
 
 * Push flow data into Elasticsearch or Solr with each batch
 
-* Push flow data onto a Kafka/Marlin topic for pull by ES?
+* Push flow data onto a Kafka topic for pull by ES?
 
 * ~~Output the flow data as parquet for query by BI tools~~
 
