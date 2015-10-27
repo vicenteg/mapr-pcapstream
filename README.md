@@ -83,6 +83,18 @@ select count(1) from dfs.`/user/vgonzalez/pcap/out/flows`;
 
 Run it a few times, and see that the count changes. That's of course because we're creating new Parquet files with each streaming batch.
 
+Some aggregations by protocol:
+
+```sql
+select 
+    protocol,
+    count(*) as packets,
+    max(length) as maxLength,
+    avg(length) as avgLength 
+  from dfs.`/user/vgonzalez/pcap/out/flows`
+  group by protocol;
+```
+
 And a more complex query to see the packet count per millisecond:
 
 ```sql
