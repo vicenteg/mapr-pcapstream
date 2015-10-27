@@ -30,7 +30,7 @@ You can do this first.
 
 Use the `submit.sh` script like so.
 
-    ./submit.sh /user/vgonzalez/pcap/in/2015/10/21 /user/vgonzalez/pcap/out
+    ./submit.sh /user/vgonzalez/pcap/in/`date +%Y/%m/%d` /user/vgonzalez/pcap/out
 
 The script defaults to using a YARN cluster. If you want to run locally, edit the script and change `SPARK_MASTER` to something like `local[2]`. You can also use a spark-standalone cluster by supplying the spark master URL.
 
