@@ -11,6 +11,8 @@ import org.apache.hadoop.io.{BytesWritable, NullWritable}
 import org.apache.hadoop.mapred.FileInputFormat
 import org.apache.hadoop.mapred.JobConf
 
+import org.elasticsearch.spark._
+
 import com.mapr.sample.WholeFileInputFormat
 import edu.gatech.sjpcap._
 
@@ -53,6 +55,7 @@ object PcapStream {
         val out = Paths.get(outputPath, directoryFormat.format(date)).toString
         val df = sqlContext.createDataFrame(rdd)
         df.write.parquet(out)
+        rdd.saveToEs("telco/flows")
       }
     })
 
