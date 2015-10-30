@@ -11,7 +11,7 @@ fi
 
 while true; do
     if [ -d $CAPTURE_DIR ]; then
-        $inotifywait -q -t 300 -e create $CAPTURE_DIR
+        $inotifywait -t 30 -e create $CAPTURE_DIR
         # get the second most recently created file
         # the most recent is being written to and is 
         # not ready for processing. Filter out . and ..
