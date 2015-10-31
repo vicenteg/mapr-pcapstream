@@ -2,6 +2,7 @@
 SPARK_SUBMIT=/opt/mapr/spark/spark-1.4.1/bin/spark-submit
 SPARK_MASTER=yarn-cluster
 $SPARK_SUBMIT \
+    --jars lib_managed/jars/org.elasticsearch/elasticsearch-spark_2.10/elasticsearch-spark_2.10-2.2.0-m1.jar \
     --master $SPARK_MASTER \
     --num-executors 4 \
     --driver-memory 2g \

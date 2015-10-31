@@ -16,6 +16,8 @@ libraryDependencies += "org.apache.spark" %% "spark-core" % "1.4.1"
 
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "1.4.1"
 
+libraryDependencies += "org.elasticsearch" % "elasticsearch-spark_2.10" % "2.2.0-m1"
+
 scalacOptions += "-deprecation"
 
 
