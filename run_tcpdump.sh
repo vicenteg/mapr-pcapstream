@@ -2,7 +2,7 @@
 
 . env.sh
 
-mkdir -p `date +$CAPTURE_DIR_FORMAT`
+mkdir -p `date +$NFS_CAPTURE_DIR_FORMAT`
 
 # Create captures in a directory hierarchy for the date. Lets us find
 # captures by date later.
