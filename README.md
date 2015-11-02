@@ -116,7 +116,7 @@ select
 
 # TODO
 
-* Push flow data into Elasticsearch or Solr with each batch
+* ~~Push flow data into Elasticsearch or Solr with each batch~~
 
 * Push flow data onto a Kafka topic for pull by ES?
 
@@ -129,4 +129,8 @@ select
 * Dashboard the flow data in Kibana
 
 * Should `monitor_and_move.sh` do something with older `.dump*` files?
+
+* Use `-U` option to tcpdump to make output "packet buffered"?
+
+* Does spark streaming consider files that existed in previous batches and were appended to?
 
