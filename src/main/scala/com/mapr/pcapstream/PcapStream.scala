@@ -22,10 +22,11 @@ object PcapStream {
   def main(args: Array[String]) {
     val inputPath = args(0)
     val outputPath = args(1)
+    val esNodes = args(2)
 
     val conf = new SparkConf().setAppName("PCAP Flow Parser")
     conf.set("es.index.auto.create", "true")
-    conf.set("es.nodes", "172.16.2.231,172.16.2.232,172.16.2.233")
+    conf.set("es.nodes", esNodes)
     val ssc = new StreamingContext(conf, Seconds(20))
     val sc = ssc.sparkContext
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
