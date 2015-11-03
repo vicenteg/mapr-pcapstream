@@ -6,6 +6,19 @@ Captures happen using tcpdump which writes pcap files via NFS to land the raw da
 
 Eventually, this will hopefully be able to deal with very high ingest rate, multiple 40Gbps interfaces being captured.
 
+Spark Streaming will process the PCAP files and write to both Parquet and Elasticsearch to enable query and search.
+
+# Components
+
+This demo makes use of the following technologies:
+
+* MapR 5.0
+* Spark 1.4.1
+* Elasticsearch 1.7.3
+* Kibana 4.1.2
+* tcpdump OS packages
+
+
 # Building
 
 You need sbt (http://www.scala-sbt.org/).
@@ -13,6 +26,29 @@ You need sbt (http://www.scala-sbt.org/).
     sbt package
 
 # Running
+
+## Configure the Elasticsearch index
+
+Let's configure some type mappings for some of our fields. IP addresses should use the IP address type, and let's map timestampMillis to a date.
+
+In Sense (install the Sense plugin first):
+
+```
+DELETE telco
+PUT /telco
+{
+  "mappings": {
+    "flows" : {
+      "properties": {
+        "timestampMillis": { "type": "date" },
+        "srcIP": { "type": "ip" },
+        "dstIP": { "type": "ip" }
+      }
+    }
+  }
+}
+```
+
 
 ## Configure the scripts
 
