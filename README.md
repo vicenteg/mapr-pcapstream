@@ -54,13 +54,17 @@ PUT /telco
 
 In the cloned directory is a script called `env.sh`. Edit it to your liking, changing the paths as needed.
 
-`FILE_LIMIT` is used to limit the number of files tcpdump will create in a single run using the `-W` option.
+`FILE_LIMIT` is used to limit the number of files tcpdump will create in a single run using the `-W` option (if you use the `-W` option, that is).
 
 `TIME_LIMIT` is passed to tcpdump as an argument to the -G option, which limits the amount of time a given capture file covers.
 
+`SIZE_LIMIT` is passed to tcpdump as an argument to the -C option, and limits the number of bytes a capture file can contain. The argument to `-C` is in millions of bytes.
+
 Once `FILE_LIMIT` is reached, tcpdump will exit.
 
-`env.sh` tries to help you out by selecting an interface to use with tcpdump. It will find the interface with the default route for the node, and use that one. You can comment this out and hard-code another interface if you like.
+The effect of the tcpdump options should be to rotate the capture file every `TIME_LIMIT` seconds or `SIZE_LIMIT`-million bytes, which ever comes first. So files will be at most `SIZE_LIMIT`-million bytes.
+
+`env.sh` tries to help you out by selecting an interface to use with tcpdump. It will attempt to find the interface with the default route for the node, and use that one. You can comment this out and hard-code another interface if you like. This default should be fine for testing.
 
 ## Start the Spark Streaming Job
 
