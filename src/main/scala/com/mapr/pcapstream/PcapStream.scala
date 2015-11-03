@@ -85,8 +85,8 @@ object PcapStream {
 
   def extractFlowData(packet: Packet, filename: Option[String] = Some("")): Option[FlowData] = {
     packet match {
-      case t: TCPPacket => Some(new FlowData(t.timestamp, t.src_ip.getHostAddress, t.dst_ip.getHostAddress, t.src_port, t.dst_port, "TCP", t.data.length, filename.get))
-      case u: UDPPacket => Some(new FlowData(u.timestamp, u.src_ip.getHostAddress, u.dst_ip.getHostAddress, u.src_port, u.dst_port, "UDP", u.data.length, filename.get))
+      case t: TCPPacket => Some(new FlowData(t.timestamp, t.src_ip.getHostAddress(), t.dst_ip.getHostAddress(), t.src_port, t.dst_port, "TCP", t.data.length, filename.get))
+      case u: UDPPacket => Some(new FlowData(u.timestamp, u.src_ip.getHostAddress(), u.dst_ip.getHostAddress(), u.src_port, u.dst_port, "UDP", u.data.length, filename.get))
       case _ => None
     }
   }
