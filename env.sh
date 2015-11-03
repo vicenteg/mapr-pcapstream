@@ -7,7 +7,7 @@
 IF=$(netstat -rn | egrep '^(default|0.0.0.0)' | tr -s ' ' | cut -f 8 -d ' ')
 FILE_LIMIT=100
 TIME_LIMIT=30
-SIZE_LIMIT=1000
+SIZE_LIMIT=512
 MFS_CAPTURE_DIR_FORMAT="/apps/pcap/in/%Y/%m/%d"
 NFS_CAPTURE_DIR_FORMAT="/mapr/vgonzalez.spark$MFS_CAPTURE_DIR_FORMAT"
 MFS_OUTPUT_DIR="/apps/pcap/out"
