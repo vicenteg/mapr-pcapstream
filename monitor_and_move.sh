@@ -16,7 +16,7 @@ while true; do
         # the most recent is being written to and is 
         # not ready for processing. Filter out . and ..
         FILENAME_TO_RENAME=$(ls -atr $NFS_CAPTURE_DIR | egrep -v '^\.{1,2}$' | tail -2 | head -1)
-        NEW_NAME=$(echo $FILENAME_TO_RENAME | sed -e 's/\.//g')
+        NEW_NAME=$(echo $FILENAME_TO_RENAME | sed -e 's/\.//')
         if ! [ $FILENAME_TO_RENAME == $NEW_NAME ]; then
             if ! $(mv "$NFS_CAPTURE_DIR/$FILENAME_TO_RENAME" "$NFS_CAPTURE_DIR/$NEW_NAME"); then
                 echo "Failed to rename $NFS_CAPTURE_DIR/$FILENAME_TO_RENAME"
