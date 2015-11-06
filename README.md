@@ -164,13 +164,13 @@ select
 
 * Include a directory path for the files
 
-* Good naming convention for the pcap filenames so we can pull them back
+* ~~Good naming convention for the pcap filenames so we can pull them back~~
 
-* Dashboard the flow data in Kibana
+* ~~Dashboard the flow data in Kibana~~
 
 * Should `monitor_and_move.sh` do something with older `.dump*` files?
 
 * Use `-U` option to tcpdump to make output "packet buffered"?
 
-* Does spark streaming consider files that existed in previous batches and were appended to?
+* ~~Does spark streaming consider files that existed in previous batches and were appended to?~~
 
