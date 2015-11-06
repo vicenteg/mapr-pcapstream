@@ -1,1 +1,3 @@
-/Users/vince/Desktop/Elasticsearch-Operations/ESCoreOperations/elasticsearch-1.7.3/config/elasticsearch.yml
+cluster.name: my_cluster
+discovery.zen.ping.multicast.enabled: false
+discovery.zen.ping.unicast.hosts: [ "172.16.2.231", "172.16.2.232", "172.16.2.233" ]

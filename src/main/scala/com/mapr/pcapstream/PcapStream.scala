@@ -22,8 +22,11 @@ object PcapStream {
   def main(args: Array[String]) {
     val inputPath = args(0)
     val outputPath = args(1)
+    val esNodes = args(2)
 
     val conf = new SparkConf().setAppName("PCAP Flow Parser")
+    conf.set("es.index.auto.create", "true")
+    conf.set("es.nodes", esNodes)
     val ssc = new StreamingContext(conf, Seconds(20))
     val sc = ssc.sparkContext
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
@@ -82,8 +85,8 @@ object PcapStream {
 
   def extractFlowData(packet: Packet, filename: Option[String] = Some("")): Option[FlowData] = {
     packet match {
-      case t: TCPPacket => Some(new FlowData(t.timestamp, t.src_ip.toString, t.dst_ip.toString, t.src_port, t.dst_port, "TCP", t.data.length, filename.get))
-      case u: UDPPacket => Some(new FlowData(u.timestamp, u.src_ip.toString, u.dst_ip.toString, u.src_port, u.dst_port, "UDP", u.data.length, filename.get))
+      case t: TCPPacket => Some(new FlowData(t.timestamp, t.src_ip.getHostAddress(), t.dst_ip.getHostAddress(), t.src_port, t.dst_port, "TCP", t.data.length, filename.get))
+      case u: UDPPacket => Some(new FlowData(u.timestamp, u.src_ip.getHostAddress(), u.dst_ip.getHostAddress(), u.src_port, u.dst_port, "UDP", u.data.length, filename.get))
       case _ => None
     }
   }

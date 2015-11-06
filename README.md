@@ -6,6 +6,19 @@ Captures happen using tcpdump which writes pcap files via NFS to land the raw da
 
 Eventually, this will hopefully be able to deal with very high ingest rate, multiple 40Gbps interfaces being captured.
 
+Spark Streaming will process the PCAP files and write to both Parquet and Elasticsearch to enable query and search.
+
+# Components
+
+This demo makes use of the following technologies:
+
+* MapR 5.0
+* Spark 1.4.1
+* Elasticsearch 1.7.3
+* Kibana 4.1.2
+* tcpdump OS packages
+
+
 # Building
 
 You need sbt (http://www.scala-sbt.org/).
@@ -14,17 +27,44 @@ You need sbt (http://www.scala-sbt.org/).
 
 # Running
 
+## Configure the Elasticsearch index
+
+Let's configure some type mappings for some of our fields. IP addresses should use the IP address type, and let's map timestampMillis to a date.
+
+In Sense (install the Sense plugin first):
+
+```
+DELETE telco
+PUT /telco
+{
+  "mappings": {
+    "flows" : {
+      "properties": {
+        "timestampMillis": { "type": "date" },
+        "srcIP": { "type": "ip" },
+        "dstIP": { "type": "ip" }
+      }
+    }
+  }
+}
+```
+
+
 ## Configure the scripts
 
 In the cloned directory is a script called `env.sh`. Edit it to your liking, changing the paths as needed.
 
-`FILE_LIMIT` is used to limit the number of files tcpdump will create in a single run using the `-W` option.
+`FILE_LIMIT` is used to limit the number of files tcpdump will create in a single run using the `-W` option (if you use the `-W` option, that is).
 
 `TIME_LIMIT` is passed to tcpdump as an argument to the -G option, which limits the amount of time a given capture file covers.
 
+`SIZE_LIMIT` is passed to tcpdump as an argument to the -C option, and limits the number of bytes a capture file can contain. The argument to `-C` is in millions of bytes.
+
 Once `FILE_LIMIT` is reached, tcpdump will exit.
 
-`env.sh` tries to help you out by selecting an interface to use with tcpdump. It will find the interface with the default route for the node, and use that one. You can comment this out and hard-code another interface if you like.
+The effect of the tcpdump options should be to rotate the capture file every `TIME_LIMIT` seconds or `SIZE_LIMIT`-million bytes, which ever comes first. So files will be at most `SIZE_LIMIT`-million bytes.
+
+`env.sh` tries to help you out by selecting an interface to use with tcpdump. It will attempt to find the interface with the default route for the node, and use that one. You can comment this out and hard-code another interface if you like. This default should be fine for testing.
 
 ## Start the Spark Streaming Job
 
@@ -116,7 +156,7 @@ select
 
 # TODO
 
-* Push flow data into Elasticsearch or Solr with each batch
+* ~~Push flow data into Elasticsearch or Solr with each batch~~
 
 * Push flow data onto a Kafka topic for pull by ES?
 
@@ -129,4 +169,8 @@ select
 * Dashboard the flow data in Kibana
 
 * Should `monitor_and_move.sh` do something with older `.dump*` files?
+
+* Use `-U` option to tcpdump to make output "packet buffered"?
+
+* Does spark streaming consider files that existed in previous batches and were appended to?
 
