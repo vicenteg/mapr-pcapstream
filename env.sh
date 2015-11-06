@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 # This works on Mac OS, probably not on linux.
-# IF=$(netstat -rn | grep default | head -1 | tr -s " " | cut -f 6 -d " ")
+IF=$(netstat -rn | grep default | head -1 | tr -s " " | cut -f 6 -d " ")
 
 # linux
-IF=$(netstat -rn | egrep '^(default|0.0.0.0)' | tr -s ' ' | cut -f 8 -d ' ')
+# IF=$(netstat -rn | egrep '^(default|0.0.0.0)' | tr -s ' ' | cut -f 8 -d ' ')
 FILE_LIMIT=100
 TIME_LIMIT=30
 SIZE_LIMIT=512
