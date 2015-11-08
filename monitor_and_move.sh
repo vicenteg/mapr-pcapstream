@@ -14,7 +14,7 @@ if [ -z "$inotifywait" -a -z "$fswatch" ]; then
 fi
 
 if [ ! -z "$inotifywait" ]; then
-    notifyprogam=$inotifywait
+    notifyprogram=$inotifywait
 elif [ ! -z "$fswatch" ]; then
     notifyprogram=$fswatch
 fi
