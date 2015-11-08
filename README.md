@@ -18,6 +18,15 @@ This demo makes use of the following technologies:
 * Kibana 4.1.2
 * tcpdump OS packages
 
+# Prerequisites
+
+Install inotify and tcpdump on Linux:
+
+`yum -y install inotify-tools tcpdump`
+
+On Mac OS for local testing, install fswatch with homebrew:
+
+`brew install fswatch`
 
 # Building
 
@@ -114,6 +123,14 @@ On your resourcemanager GUI, find the running application. You should see an app
 Now you should be looking at the Spark application UI. Have a look around.
 
 Under the Jobs tab, click on the Event Timeline link. Check out the timeline view of the streaming job. If tcpdump has seen any data, you should see some little blue boxes appearing at somewhat regular intervals. Click on one of the small blue boxes and have a look at the job the box represents. 
+
+You can look at the YARN application this way:
+
+`yarn application -list | grep com.mapr.pcapstream.PcapStream`
+
+And you can kill it like this:
+
+`yarn application -list | grep com.mapr.pcapstream.PcapStream | awk '{ print $1 }' | xargs yarn application -kill`
 
 ## Drill
 
