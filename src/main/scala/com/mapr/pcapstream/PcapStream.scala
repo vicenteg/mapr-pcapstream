@@ -35,7 +35,7 @@ object PcapStream {
     val input = inputPath
     val output = outputPath
     val directoryFormat = new SimpleDateFormat("'flows'/yyyy/MM/dd/HH/mm/ss")
-    val indexFormat = new SimpleDateFormat("'telco'.yyyy.MM.dd/flows")
+    val indexFormat = new SimpleDateFormat("'telco'.yyyy.MM.dd/'flows'")
 
 
     val jobConf = new JobConf(sc.hadoopConfiguration)
