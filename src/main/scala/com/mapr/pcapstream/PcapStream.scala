@@ -35,6 +35,8 @@ object PcapStream {
     val input = inputPath
     val output = outputPath
     val directoryFormat = new SimpleDateFormat("'flows'/yyyy/MM/dd/HH/mm/ss")
+    val indexFormat = new SimpleDateFormat("'telco'.yyyy.MM.dd/flows")
+
 
     val jobConf = new JobConf(sc.hadoopConfiguration)
     jobConf.setJobName("PCAP Stream Processing")
@@ -58,7 +60,7 @@ object PcapStream {
         val out = Paths.get(outputPath, directoryFormat.format(date)).toString
         val df = sqlContext.createDataFrame(rdd)
         df.write.parquet(out)
-        rdd.saveToEs("telco/flows")
+        rdd.saveToEs(indexFormat.format(date))
       }
     })
 
