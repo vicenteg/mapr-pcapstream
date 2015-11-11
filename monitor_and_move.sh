@@ -38,9 +38,10 @@ while true; do
 	if [ ! $? -eq 0 ]; then
             exit -1
         fi
-        FILENAME_TO_RENAME=$(ls -atr $NFS_CAPTURE_DIR | egrep -v '^\.{1,2}$' | tail -2 | head -1)
+        FILENAME_TO_RENAME=$(ls -atr $NFS_CAPTURE_DIR | egrep "$CAPTURE_FILE_PREFIX" | egrep -v '^\.{1,2}$' | tail -2 | head -1)
         NEW_NAME=$(echo $FILENAME_TO_RENAME | sed -e 's/\.//')
         if ! [ $FILENAME_TO_RENAME == $NEW_NAME ]; then
+            echo "renaming $FILENAME_TO_RENAME to $NEW_NAME"
             if ! $(mv "$NFS_CAPTURE_DIR/$FILENAME_TO_RENAME" "$NFS_CAPTURE_DIR/$NEW_NAME"); then
                 echo "Failed to rename $NFS_CAPTURE_DIR/$FILENAME_TO_RENAME"
             fi
