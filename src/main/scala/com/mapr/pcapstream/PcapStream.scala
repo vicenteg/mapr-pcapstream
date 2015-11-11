@@ -17,7 +17,7 @@ import com.mapr.sample.WholeFileInputFormat
 import edu.gatech.sjpcap._
 
 object PcapStream {
-  case class FlowData(timestampMillis: Long, srcIP: String, dstIP: String, srcPort: Integer, dstPort: Integer, protocol: String, length: Integer, captureFilename: String)
+  case class FlowData(timestampMillis: Long, srcIP: String, dstIP: String, srcPort: Integer, dstPort: Integer, protocol: String, length: Integer, payload: Array[Byte], captureFilename: String)
 
   def main(args: Array[String]) {
     val inputPath = args(0)
@@ -87,8 +87,8 @@ object PcapStream {
 
   def extractFlowData(packet: Packet, filename: Option[String] = Some("")): Option[FlowData] = {
     packet match {
-      case t: TCPPacket => Some(new FlowData(t.timestamp, t.src_ip.getHostAddress(), t.dst_ip.getHostAddress(), t.src_port, t.dst_port, "TCP", t.data.length, filename.get))
-      case u: UDPPacket => Some(new FlowData(u.timestamp, u.src_ip.getHostAddress(), u.dst_ip.getHostAddress(), u.src_port, u.dst_port, "UDP", u.data.length, filename.get))
+      case t: TCPPacket => Some(new FlowData(t.timestamp, t.src_ip.getHostAddress(), t.dst_ip.getHostAddress(), t.src_port, t.dst_port, "TCP", t.data.length, t.data, filename.get))
+      case u: UDPPacket => Some(new FlowData(u.timestamp, u.src_ip.getHostAddress(), u.dst_ip.getHostAddress(), u.src_port, u.dst_port, "UDP", u.data.length, u.data, filename.get))
       case _ => None
     }
   }
