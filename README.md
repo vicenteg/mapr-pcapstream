@@ -79,9 +79,9 @@ The effect of the tcpdump options should be to rotate the capture file every `TI
 
 You can do this first.
 
-Use the `submit.sh` script like so.
+Use the `submit.sh` script like so. Use any account that is allowed to submit YARN jobs.
 
-    ./submit.sh /user/vgonzalez/pcap/in/`date +%Y/%m/%d` /user/vgonzalez/pcap/out
+    sudo -u mapr ./submit.sh
 
 The script defaults to using a YARN cluster. If you want to run locally, edit the script and change `SPARK_MASTER` to something like `local[2]`. You can also use a spark-standalone cluster by supplying the spark master URL.
 
@@ -137,7 +137,7 @@ And you can kill it like this:
 Since the streaming job is kicking out Parquet files, why not make the data available to BI tools via Drill? Fire up sqlline and try something like this on the output directory:
 
 ```sql
-select count(1) from dfs.`/user/vgonzalez/pcap/out/flows`;
+select count(1) from dfs.`/apps/pcap/out/flows`;
 ```
 
 Run it a few times, and see that the count changes. That's of course because we're creating new Parquet files with each streaming batch.
@@ -150,7 +150,7 @@ select
     count(*) as packets,
     max(length) as maxLength,
     avg(length) as avgLength 
-  from dfs.`/user/vgonzalez/pcap/out/flows`
+  from dfs.`/apps/pcap/out/flows`
   group by protocol;
 ```
 
@@ -168,7 +168,7 @@ select
     length,
     count(*) over(partition by timestampMillis) as countPerMilli,
     avg(length) over(partition by timestampMillis) as avgLengthPerMilli 
-  from dfs.`/user/vgonzalez/pcap/out/flows`;
+  from dfs.`/apps/pcap/out/flows`;
 ```
 
 # TODO
