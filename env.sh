@@ -9,6 +9,8 @@ FILE_LIMIT=100
 TIME_LIMIT=30
 SIZE_LIMIT=512
 
+USER=${USER:=ec2-user}
+
 # N.B. - we are assuming that maprfs:///apps is mounted
 # on /apps on the POSIX client machines.
 MFS_CAPTURE_DIR_FORMAT="/apps/pcap/in/%Y/%m/%d"
