@@ -32,7 +32,7 @@ while true; do
         NOTIFY_ARGS="-1 --event Created -x $NFS_CAPTURE_DIR"
     fi
 
-    if [ -d $CAPTURE_DIR ]; then
+    if [ -d $NFS_CAPTURE_DIR ]; then
         $notifyprogram $NOTIFY_ARGS
         # get the second most recently created file
         # the most recent is being written to and is 
