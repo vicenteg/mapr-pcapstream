@@ -1,6 +1,7 @@
 #!/bin/bash -ex
 
-. env.sh
+home=$(dirname $0)
+. "$home/env.sh"
 
 mkdir -p `date +$NFS_CAPTURE_DIR_FORMAT`
 
