@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-source env.sh
+home=$(dirname $0)
+source "$home/env.sh"
 
 SPARK_SUBMIT=/opt/mapr/spark/spark-1.4.1/bin/spark-submit
 SPARK_MASTER=yarn-cluster
