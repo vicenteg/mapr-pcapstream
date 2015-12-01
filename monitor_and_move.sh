@@ -2,11 +2,13 @@
 
 trap "echo Bye!; exit 1" SIGINT SIGTERM
 
+home=$(dirname $0)
+
 # inotifywait for Linux
-inotifywait=$(which inotifywait)
+inotifywait=$(which inotifywait 2>/dev/null)
 
 # fswatch for Mac OS (for running spark in local mode for dev)
-fswatch=$(which fswatch)
+fswatch=$(which fswatch 2>/dev/null)
 
 if [ -z "$inotifywait" -a -z "$fswatch" ]; then
     echo "Could not find a suitable monitor. Please install inotify-tools (linux) or fswatch (Mac OS)"
@@ -22,7 +24,7 @@ fi
 while true; do
     # Source the environment each time through the loop to cross
     # from day to day.
-    source env.sh
+    source "$home/env.sh"
 
     if [ ! -z $inotifywait ]; then
         NOTIFY_ARGS="-q -t 300 -e create $NFS_CAPTURE_DIR"
