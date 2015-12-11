@@ -4,7 +4,6 @@ package com.mapr.sample;
 import java.io.IOException;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -23,7 +22,8 @@ class WholeFileRecordReader extends RecordReader<NullWritable, BytesWritable> {
     private NullWritable key = NullWritable.get();
     private BytesWritable value = new BytesWritable();
 
-    public void initialize(InputSplit inputSplit, TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
+    public void initialize(InputSplit inputSplit, TaskAttemptContext taskAttemptContext)
+            throws IOException, InterruptedException {
         this.fileSplit = (FileSplit) inputSplit;
         this.conf = taskAttemptContext.getConfiguration();
     }

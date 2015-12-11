@@ -9,7 +9,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.fs.Path;
 
 public class WholeFileInputFormat extends FileInputFormat<NullWritable, BytesWritable> {
