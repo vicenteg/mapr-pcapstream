@@ -1,23 +1,24 @@
 package com.mapr.pcapstream
 
-import java.util.Date
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
+import java.util.Date
 
+import net.ripe.hadoop.pcap.io.reader.NewApiPcapInputFormat
+import net.ripe.hadoop.pcap.packet.Packet
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark._
 
-import org.apache.hadoop.io.{BytesWritable, NullWritable}
+import org.apache.hadoop.io.{LongWritable, ObjectWritable}
 import org.apache.hadoop.mapred.FileInputFormat
 import org.apache.hadoop.mapred.JobConf
 
 import org.elasticsearch.spark._
 
-import com.mapr.sample.WholeFileInputFormat
-import edu.gatech.sjpcap._
-
 object PcapStream {
   case class FlowData(timestampMillis: Long, srcIP: String, dstIP: String, srcPort: Integer, dstPort: Integer, protocol: String, length: Integer, payload: Array[Byte], captureFilename: String)
+
+  case class FlowC(src: String, srcPort: Int, dst: String, dstPort: Int, protocol: String)
 
   def main(args: Array[String]) {
     val inputPath = args(0)
@@ -42,18 +43,48 @@ object PcapStream {
     jobConf.setJobName("PCAP Stream Processing")
     FileInputFormat.setInputPaths(jobConf, input)
 
-    val pcapBytes = ssc.fileStream[NullWritable, BytesWritable, WholeFileInputFormat](directory = input)
+    val pcapBytes = ssc.fileStream[LongWritable, ObjectWritable, NewApiPcapInputFormat](directory = input)
 
-    val packets = pcapBytes.flatMap {
-        case (filename, packet) =>
-          val pcapParser = new PcapParser()
-          pcapParser.openFile(packet.getBytes)
+    pcapBytes.foreachRDD(rdd => {
+      val flows = rdd.map(p => {
+        val lw = p._1
+        val ow = p._2
+        val packet = ow.get match {
+          case pkt: Packet => pkt
+          case _ => throw new ClassCastException
+        }
+        val f = new FlowC(
+          src=packet.get(Packet.SRC).asInstanceOf[String],
+          srcPort=packet.get(Packet.SRC_PORT).asInstanceOf[Int],
+          dst=packet.get(Packet.DST).asInstanceOf[String],
+          dstPort=packet.get(Packet.DST_PORT).asInstanceOf[Int],
+          protocol=packet.get(Packet.PROTOCOL).asInstanceOf[String])
 
-          val pcapIterator = new PcapIterator(pcapParser)
-          for (flowData <- pcapIterator.toList if flowData != None)
-            yield (flowData.get)
-    }
+        (f, 1)
+      })
 
+      val flowCounts = flows.reduceByKey((n,m) => n+m).collect()
+
+      println(rdd.count)
+      if (rdd.count > 0) {
+        flowCounts.foreach(t => {
+          println(t._1, t._2)
+        })
+      }
+      /*
+      rdd.foreach(a => {
+        val lw = a._1
+        val ow = a._2
+        val packet = ow.get match {
+          case p: Packet => p
+          case _ => throw new ClassCastException
+        }
+        //println(s"$lw ${packet.toString}")
+        println(packet.getFlow)
+      })
+      */
+    })
+/*
     packets.foreachRDD(rdd => {
       if (rdd.count() > 0) {
         val date = new Date()
@@ -63,11 +94,11 @@ object PcapStream {
         rdd.saveToEs(indexFormat.format(date))
       }
     })
-
+*/
     ssc.start()
     ssc.awaitTermination()
   }
-
+/*
   class PcapIterator(pcapParser: PcapParser, filename: String = "") extends Iterator[Option[FlowData]] {
     private var _headerMap: Option[FlowData] = None
 
@@ -84,7 +115,9 @@ object PcapStream {
       packet != Packet.EOF
     }
   }
+  */
 
+  /*
   def extractFlowData(packet: Packet, filename: Option[String] = Some("")): Option[FlowData] = {
     packet match {
       case t: TCPPacket => Some(new FlowData(t.timestamp, t.src_ip.getHostAddress(), t.dst_ip.getHostAddress(), t.src_port, t.dst_port, "TCP", t.data.length, t.data, filename.get))
@@ -92,4 +125,5 @@ object PcapStream {
       case _ => None
     }
   }
+  */
 }

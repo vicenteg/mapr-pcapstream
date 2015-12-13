@@ -18,6 +18,8 @@ libraryDependencies += "org.apache.spark" %% "spark-sql" % "1.4.1"
 
 libraryDependencies += "org.elasticsearch" % "elasticsearch-spark_2.10" % "2.2.0-m1"
 
+libraryDependencies += "com.google.guava" % "guava" % "19.0"
+
 scalacOptions += "-deprecation"
 
 
