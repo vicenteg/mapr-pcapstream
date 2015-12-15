@@ -7,4 +7,4 @@ SPARK_MASTER=local[4]
 $SPARK_SUBMIT \
     --jars lib_managed/jars/org.elasticsearch/elasticsearch-spark_2.10/elasticsearch-spark_2.10-2.2.0-m1.jar,lib_managed/bundles/com.google.guava/guava/guava-19.0.jar,lib/hadoop-pcap-lib-1.2-SNAPSHOT.jar \
     --master $SPARK_MASTER \
-    target/scala-2.10/pcapstream_2.10-1.0.jar `date +$NFS_CAPTURE_DIR_FORMAT` $NFS_OUTPUT_DIR localhost
+    target/scala-2.10/pcapstream_2.10-1.0.jar `date +$NFS_CAPTURE_DIR_FORMAT` $NFS_OUTPUT_DIR $ES_HOSTS

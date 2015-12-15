@@ -10,7 +10,7 @@ TIME_LIMIT=30
 SIZE_LIMIT=512
 
 USER=${USER:=ec2-user}
-ES_HOSTS=
+ES_HOSTS=${ES_HOSTS:=localhost}
 
 # N.B. - we are assuming that maprfs:///apps is mounted
 # on /apps on the POSIX client machines.
