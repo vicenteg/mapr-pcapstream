@@ -25,9 +25,10 @@ object PcapStream {
     val outputPath = args(1)
     val esNodes = args(2)
 
-    val conf = new SparkConf().setAppName("PCAP Flow Parser")
+    val conf = new SparkConf().setAppName("PCAP Streaming Demo")
     conf.set("es.index.auto.create", "true")
     conf.set("es.nodes", esNodes)
+
     val ssc = new StreamingContext(conf, Seconds(30))
     val sc = ssc.sparkContext
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
@@ -38,84 +39,56 @@ object PcapStream {
     val directoryFormat = new SimpleDateFormat("'flows'/yyyy/MM/dd/HH/mm/ss")
     val indexFormat = new SimpleDateFormat("'telco'.yyyy.MM.dd/'flows'")
 
-
     val jobConf = new JobConf(sc.hadoopConfiguration)
     jobConf.setJobName("PCAP Stream Processing")
     FileInputFormat.setInputPaths(jobConf, input)
 
-    val pcapBytes = ssc.fileStream[LongWritable, ObjectWritable, NewApiPcapInputFormat](directory = input)
+    val pcapData = ssc.fileStream[LongWritable, ObjectWritable, NewApiPcapInputFormat](directory = input)
 
-    pcapBytes.foreachRDD(rdd => {
+    pcapData.map(r => (r._1.get, r._2.get)).foreachRDD(rdd => {
       val flows = rdd.map(p => {
-        val lw = p._1
-        val ow = p._2
-        val packet = ow.get match {
+        val packet = p._2 match {
           case pkt: Packet => pkt
           case _ => throw new ClassCastException
         }
+
         val f = new FlowC(
           src=packet.get(Packet.SRC).asInstanceOf[String],
           srcPort=packet.get(Packet.SRC_PORT).asInstanceOf[Int],
           dst=packet.get(Packet.DST).asInstanceOf[String],
           dstPort=packet.get(Packet.DST_PORT).asInstanceOf[Int],
           protocol=packet.get(Packet.PROTOCOL).asInstanceOf[String])
-
         (f, 1)
       })
 
-      val flowCounts = flows.reduceByKey((n,m) => n+m).collect()
+      val flowCounts = flows.reduceByKey((n,m) => n+m)
+      flowCounts.cache()
 
-      println(rdd.count)
+      LogHolder.log.info(s"${rdd.count} packets in $rdd")
+      LogHolder.log.info(s"$flowCounts")
       if (rdd.count > 0) {
         flowCounts.foreach(t => {
-          println(t._1, t._2)
+          LogHolder.log.info(s"Flow: ${t._1} has ${t._2} packets.")
         })
-      }
-      /*
-      rdd.foreach(a => {
-        val lw = a._1
-        val ow = a._2
-        val packet = ow.get match {
-          case p: Packet => p
-          case _ => throw new ClassCastException
-        }
-        //println(s"$lw ${packet.toString}")
-        println(packet.getFlow)
-      })
-      */
-    })
-/*
-    packets.foreachRDD(rdd => {
-      if (rdd.count() > 0) {
+
         val date = new Date()
-        val out = Paths.get(outputPath, directoryFormat.format(date)).toString
-        val df = sqlContext.createDataFrame(rdd)
-        df.write.parquet(out)
-        rdd.saveToEs(indexFormat.format(date))
+        //val out = Paths.get(outputPath, directoryFormat.format(date)).toString
+        //val df = sqlContext.createDataFrame(rdd)
+        //df.write.parquet(out)
+        val packets = rdd.map(t => t._2.asInstanceOf[Packet])
+        // This one's for you, Elasticsearch 1.7.
+        val packetsWithMillsecondTimestamps = packets.map(p => {
+          val timestamp = (p.get(Packet.TIMESTAMP).asInstanceOf[Long] * 1000) + (p.get(Packet.TIMESTAMP_MICROS).asInstanceOf[Long]/1000)
+          p.put("@timestamp", timestamp.asInstanceOf[Object])
+          p
+        })
+        packetsWithMillsecondTimestamps.saveToEs(indexFormat.format(date))
       }
     })
-*/
+
     ssc.start()
     ssc.awaitTermination()
   }
-/*
-  class PcapIterator(pcapParser: PcapParser, filename: String = "") extends Iterator[Option[FlowData]] {
-    private var _headerMap: Option[FlowData] = None
-
-    def next() = {
-        _headerMap
-    }
-
-    def hasNext: Boolean = {
-      val packet = pcapParser.getPacket
-      if (packet == Packet.EOF)
-        _headerMap = None
-      else
-        _headerMap = extractFlowData(packet, Some(filename))
-      packet != Packet.EOF
-    }
-  }
-  */
 
   /*
   def extractFlowData(packet: Packet, filename: Option[String] = Some("")): Option[FlowData] = {
