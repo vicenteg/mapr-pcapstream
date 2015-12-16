@@ -7,7 +7,7 @@ if [ $os == "Darwin" ]; then
 	IF=$(netstat -rn | grep default | head -1 | tr -s " " | cut -f 6 -d " ")
 elif [ $os == "Linux" ]; then
 	# linux
-	LINUX_IF=$(netstat -rn | egrep '^(default|0.0.0.0)' | tr -s ' ' | cut -f 8 -d ' ')
+	IF=$(netstat -rn | egrep '^(default|0.0.0.0)' | tr -s ' ' | cut -f 8 -d ' ')
 else
 	echo "Sorry, only Mac OS or Linux allowed."
 	exit 1
