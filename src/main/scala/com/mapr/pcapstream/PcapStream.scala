@@ -120,19 +120,6 @@ object PcapStream {
 
       LogHolder.log.info(s"${rdd.count} packets in $rdd")
       LogHolder.log.info(s"${packetSchema.count} packets in $packetSchema")
-
-      /*
-      if (rdd.count > 0) {
-        val packets = rdd.map(t => t._2.asInstanceOf[Packet])
-        // This one's for you, Elasticsearch 1.7.
-        val packetsWithMillsecondTimestamps = packets.map(p => {
-          val timestamp = (p.get(Packet.TIMESTAMP).asInstanceOf[Long] * 1000) + (p.get(Packet.TIMESTAMP_MICROS).asInstanceOf[Long]/1000)
-          p.put("@timestamp", timestamp.asInstanceOf[Object])
-          p
-        })
-        packetsWithMillsecondTimestamps.saveToEs(indexFormat.format(date))
-      }
-      */
     })
 
     ssc.start()
