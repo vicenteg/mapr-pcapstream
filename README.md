@@ -21,6 +21,7 @@ This demo makes use of the following technologies:
 * Elasticsearch 1.7.3
 * Kibana 4.1.2
 * tcpdump OS packages
+* RIPE-NCC/hadoop-pcap (Hadoop InputFormat and RecordReader for PCAP)
 
 # Prerequisites
 
@@ -45,8 +46,8 @@ You need sbt (http://www.scala-sbt.org/).
 Let's configure some type mappings for some of our fields. We add a template
 for this so that any new indexes matching a pattern get the same settings.
 
-The most important part of the below is the mapping of the @timestamp field to
-a `date` type. This will change slightly with 2.0, since the
+The most important part of the below is the mapping of the timestamp field to
+a `date` type. (This will change slightly with 2.0)
 
 In Sense (install the Sense plugin first):
 
@@ -105,27 +106,33 @@ bytes.
 with tcpdump. It will attempt to find the interface with the default
 route for the node, and use that one. You can comment this out and
 hard-code another interface if you like. This default should be
-fine for testing.
+fine for testing, and the script will try to figure out what OS
+you're running on in order to select an interface in a reasonable way.
+The script works well for me on Mac OS X El Capitan (for local tests) and
+on CentOS and Amazon Linux. YMMV.
 
 ## Start the Spark Streaming Job
 
 You can do this first.
 
 Use the `submit.sh` script like so. Use any account that is allowed
-to submit YARN jobs.
+to submit YARN jobs. On MapR, I'll submit as the MapR superuser for
+simplicity's sake.
 
     sudo -u mapr ./submit.sh
 
 The script defaults to using a YARN cluster. If you want to run
 locally, edit the script and change `SPARK_MASTER` to something
 like `local[2]`. You can also use a spark-standalone cluster by
-supplying the spark master URL.
+supplying the spark master URL. There's a local_submit.sh script
+that can be used for local testing.
 
 ### Input
 
 The first path in the submit.sh invocation is the input directory,
 where Spark will look for new files. The second is the output
-directory, where the job will store output.
+directory, where the job will store output. The third passes the
+elasticsearch node list.
 
 Notice that the input directory is at the end of a pathname that
 has the pcap files organized by day - this makes it very easy to
@@ -160,7 +167,7 @@ will permit spark streaming to consider the file in the next batch.
 
 Anyway, run the script:
 
-    ./monitor_and_move
+    ./monitor_and_move.sh
 
 If you have not yet started tcpdump via the script below,
 `monitor_and_move` will pace back and forth impatiently until the
@@ -230,16 +237,16 @@ And a more complex query to see the packet count per millisecond:
 
 ```sql
 select 
-    cast(to_timestamp(cast(timestampMillis/1000 as bigint)) as date) as tsDate,
-    date_part('hour', to_timestamp(cast(timestampMillis/1000 as bigint))) as tsHour,
-    date_part('minute', to_timestamp(cast(timestampMillis/1000 as bigint))) as tsMinute,
-    date_part('second', to_timestamp(cast(timestampMillis/1000 as bigint))) as tsSecond,
-    timestampMillis,
+    cast(to_timestamp(cast(`timestamp`/1000 as bigint)) as date) as tsDate,
+    date_part('hour', to_timestamp(cast(`timestamp`/1000 as bigint))) as tsHour,
+    date_part('minute', to_timestamp(cast(`timestamp`/1000 as bigint))) as tsMinute,
+    date_part('second', to_timestamp(cast(`timestamp`/1000 as bigint))) as tsSecond,
+    `timestamp`,
     srcPort,
     dstPort,
     length,
-    count(*) over(partition by timestampMillis) as countPerMilli,
-    avg(length) over(partition by timestampMillis) as avgLengthPerMilli 
+    count(*) over(partition by `timestamp`) as countPerMilli,
+    avg(length) over(partition by `timestamp`) as avgLengthPerMilli 
   from dfs.`/apps/pcap/out/flows`;
 ```
 
