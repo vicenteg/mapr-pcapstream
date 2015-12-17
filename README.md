@@ -80,7 +80,8 @@ PUT _template/telco
 
 ## Configure the scripts
 
-In the cloned directory is a script called `env.sh`. Edit it to your liking, changing the paths as needed.
+In the cloned directory is a script called `env.sh`. Edit it to your
+liking, changing the paths as needed.
 
 `ES_HOSTS` is a list of elasticsearch nodes to target for indexing.
 
@@ -252,17 +253,12 @@ select
 
 # TODO
 
-* ~~Push flow data into Elasticsearch or Solr with each batch~~
+
+* Compact the large number of parquet files with Drill
 
 * Push flow data onto a Kafka topic for pull by ES?
 
-* ~~Output the flow data as parquet for query by BI tools~~
-
 * Include a directory path for the files
-
-* ~~Good naming convention for the pcap filenames so we can pull them back~~
-
-* ~~Dashboard the flow data in Kibana~~
 
 * Should `monitor_and_move.sh` do something with older `.dump*` files?
 
@@ -270,3 +266,10 @@ select
 
 * ~~Does spark streaming consider files that existed in previous batches and were appended to?~~
 
+* ~~Push flow data into Elasticsearch or Solr with each batch~~
+
+* ~~Good naming convention for the pcap filenames so we can pull them back~~
+
+* ~~Dashboard the flow data in Kibana~~
+
+* ~~Output the flow data as parquet for query by BI tools~~
