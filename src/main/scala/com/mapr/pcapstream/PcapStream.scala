@@ -16,9 +16,37 @@ import org.apache.hadoop.mapred.JobConf
 import org.elasticsearch.spark._
 
 object PcapStream {
-  case class FlowData(timestampMillis: Long, srcIP: String, dstIP: String, srcPort: Integer, dstPort: Integer, protocol: String, length: Integer, payload: Array[Byte], captureFilename: String)
+  case class IPFlags(ipFlagsDf: Boolean,
+                     ipFlagsMf: Boolean)
 
-  case class FlowC(src: String, srcPort: Int, dst: String, dstPort: Int, protocol: String)
+  case class TCPFlags(tcpFlagNs: Boolean,
+                      tcpFlagCwr: Boolean,
+                      tcpFlagEce: Boolean,
+                      tcpFlagUrg: Boolean,
+                      tcpFlagAck: Boolean,
+                      tcpFlagPsh: Boolean,
+                      tcpFlagRst: Boolean,
+                      tcpFlagSyn: Boolean,
+                      tcpFlagFin: Boolean)
+
+  case class PacketSchema(timestamp: Long,
+                          src: String,
+                          srcPort: Int,
+                          dst: String,
+                          dstPort: Int,
+                          protocol: String,
+                          ttl: Int,
+                          ipVersion: Int,
+                          length: Long,
+                          tcpSeq: Long,
+                          tcpAck: Long,
+                          udpSum: Int,
+                          udpLength: Int,
+                          reassembledTcpFragments: String,
+                          reassembledUdpFragments: String,
+                          ipFlags: IPFlags,
+                          tcpFlags: TCPFlags)
+
 
   def main(args: Array[String]) {
     val inputPath = args(0)
@@ -46,35 +74,55 @@ object PcapStream {
     val pcapData = ssc.fileStream[LongWritable, ObjectWritable, NewApiPcapInputFormat](directory = input)
 
     pcapData.map(r => (r._1.get, r._2.get)).foreachRDD(rdd => {
-      val flows = rdd.map(p => {
-        val packet = p._2 match {
-          case pkt: Packet => pkt
+      val packets = rdd.map(t => {
+        t._2 match {
+          case p: Packet => p
           case _ => throw new ClassCastException
         }
-
-        val f = new FlowC(
-          src=packet.get(Packet.SRC).asInstanceOf[String],
-          srcPort=packet.get(Packet.SRC_PORT).asInstanceOf[Int],
-          dst=packet.get(Packet.DST).asInstanceOf[String],
-          dstPort=packet.get(Packet.DST_PORT).asInstanceOf[Int],
-          protocol=packet.get(Packet.PROTOCOL).asInstanceOf[String])
-        (f, 1)
+      })
+      val packetSchema = packets.map(packet => {
+        new PacketSchema(
+          timestamp = (packet.get(Packet.TIMESTAMP).asInstanceOf[Long] * 1000) + (packet.get(Packet.TIMESTAMP_MICROS).asInstanceOf[Long] / 1000),
+          src = packet.get(Packet.SRC).asInstanceOf[String],
+          srcPort = packet.get(Packet.SRC_PORT).asInstanceOf[Int],
+          dst = packet.get(Packet.DST).asInstanceOf[String],
+          dstPort = packet.get(Packet.DST_PORT).asInstanceOf[Int],
+          protocol = packet.get(Packet.PROTOCOL).asInstanceOf[String],
+          ttl = packet.get(Packet.TTL).asInstanceOf[Int],
+          ipVersion = packet.get(Packet.IP_VERSION).asInstanceOf[Int],
+          length = packet.get(Packet.LEN).asInstanceOf[Int],
+          tcpSeq = packet.get(Packet.TCP_SEQ).asInstanceOf[Long],
+          tcpAck = packet.get(Packet.TCP_ACK).asInstanceOf[Long],
+          udpSum = packet.get(Packet.UDPSUM).asInstanceOf[Int],
+          udpLength = packet.get(Packet.UDP_LENGTH).asInstanceOf[Int],
+          reassembledTcpFragments = packet.get(Packet.REASSEMBLED_TCP_FRAGMENTS).asInstanceOf[String],
+          reassembledUdpFragments = packet.get(Packet.REASSEMBLED_DATAGRAM_FRAGMENTS).asInstanceOf[String],
+          new IPFlags(ipFlagsDf = packet.get(Packet.IP_FLAGS_DF).asInstanceOf[Boolean],
+            ipFlagsMf = packet.get(Packet.IP_FLAGS_MF).asInstanceOf[Boolean]),
+          new TCPFlags(tcpFlagNs = packet.get(Packet.TCP_FLAG_NS).asInstanceOf[Boolean],
+            tcpFlagCwr = packet.get(Packet.TCP_FLAG_CWR).asInstanceOf[Boolean],
+            tcpFlagEce = packet.get(Packet.TCP_FLAG_ECE).asInstanceOf[Boolean],
+            tcpFlagUrg = packet.get(Packet.TCP_FLAG_URG).asInstanceOf[Boolean],
+            tcpFlagAck = packet.get(Packet.TCP_FLAG_ACK).asInstanceOf[Boolean],
+            tcpFlagPsh = packet.get(Packet.TCP_FLAG_PSH).asInstanceOf[Boolean],
+            tcpFlagRst = packet.get(Packet.TCP_FLAG_RST).asInstanceOf[Boolean],
+            tcpFlagFin = packet.get(Packet.TCP_FLAG_FIN).asInstanceOf[Boolean],
+            tcpFlagSyn = packet.get(Packet.TCP_FLAG_SYN).asInstanceOf[Boolean]))
       })
 
-      val flowCounts = flows.reduceByKey((n,m) => n+m)
-      flowCounts.cache()
+      val date = new Date()
+      val out = Paths.get(outputPath, directoryFormat.format(date)).toString
+
+      packetSchema.saveToEs(indexFormat.format(date))
+      val df = packetSchema.toDF()
+      df.show(10)
+      df.write.parquet(out)
 
       LogHolder.log.info(s"${rdd.count} packets in $rdd")
-      LogHolder.log.info(s"$flowCounts")
-      if (rdd.count > 0) {
-        flowCounts.foreach(t => {
-          LogHolder.log.info(s"Flow: ${t._1} has ${t._2} packets.")
-        })
+      LogHolder.log.info(s"${packetSchema.count} packets in $packetSchema")
 
-        val date = new Date()
-        //val out = Paths.get(outputPath, directoryFormat.format(date)).toString
-        //val df = sqlContext.createDataFrame(rdd)
-        //df.write.parquet(out)
+      /*
+      if (rdd.count > 0) {
         val packets = rdd.map(t => t._2.asInstanceOf[Packet])
         // This one's for you, Elasticsearch 1.7.
         val packetsWithMillsecondTimestamps = packets.map(p => {
@@ -84,19 +132,10 @@ object PcapStream {
         })
         packetsWithMillsecondTimestamps.saveToEs(indexFormat.format(date))
       }
+      */
     })
 
     ssc.start()
     ssc.awaitTermination()
   }
-
-  /*
-  def extractFlowData(packet: Packet, filename: Option[String] = Some("")): Option[FlowData] = {
-    packet match {
-      case t: TCPPacket => Some(new FlowData(t.timestamp, t.src_ip.getHostAddress(), t.dst_ip.getHostAddress(), t.src_port, t.dst_port, "TCP", t.data.length, t.data, filename.get))
-      case u: UDPPacket => Some(new FlowData(u.timestamp, u.src_ip.getHostAddress(), u.dst_ip.getHostAddress(), u.src_port, u.dst_port, "UDP", u.data.length, u.data, filename.get))
-      case _ => None
-    }
-  }
-  */
 }
