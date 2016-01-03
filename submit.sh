@@ -3,7 +3,7 @@
 home=$(dirname $0)
 source "$home/env.sh"
 
-SPARK_SUBMIT=/opt/mapr/spark/spark-1.4.1/bin/spark-submit
+SPARK_SUBMIT=/opt/mapr/spark/spark-1.5.2/bin/spark-submit
 SPARK_MASTER=yarn-cluster
 (cd $home;
 $SPARK_SUBMIT \
