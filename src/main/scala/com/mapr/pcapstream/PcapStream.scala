@@ -4,7 +4,7 @@ import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import net.ripe.hadoop.pcap.io.reader.NewApiPcapInputFormat
+import net.ripe.hadoop.pcap.io.PcapInputFormat
 import net.ripe.hadoop.pcap.packet.Packet
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark._
@@ -71,7 +71,7 @@ object PcapStream {
     jobConf.setJobName("PCAP Stream Processing")
     FileInputFormat.setInputPaths(jobConf, input)
 
-    val pcapData = ssc.fileStream[LongWritable, ObjectWritable, NewApiPcapInputFormat](directory = input)
+    val pcapData = ssc.fileStream[LongWritable, ObjectWritable, PcapInputFormat](directory = input)
 
     pcapData.map(r => (r._1.get, r._2.get)).foreachRDD(rdd => {
       val packets = rdd.map(t => {
