@@ -1,16 +1,24 @@
 #!/usr/bin/env bash
 
-# This works on Mac OS, probably not on linux.
-# IF=$(netstat -rn | grep default | head -1 | tr -s " " | cut -f 6 -d " ")
+os=$(uname | awk '{print $1}')
 
-# linux
-IF=$(netstat -rn | egrep '^(default|0.0.0.0)' | tr -s ' ' | cut -f 8 -d ' ')
+if [ $os == "Darwin" ]; then
+	# This works on Mac OS, probably not on linux.
+	IF=$(netstat -rn | grep default | head -1 | tr -s " " | cut -f 6 -d " ")
+elif [ $os == "Linux" ]; then
+	# linux
+	IF=$(netstat -rn | egrep '^(default|0.0.0.0)' | tr -s ' ' | cut -f 8 -d ' ')
+else
+	echo "Sorry, only Mac OS or Linux allowed."
+	exit 1
+fi
+
 FILE_LIMIT=100
 TIME_LIMIT=30
 SIZE_LIMIT=512
 
 USER=${USER:=ec2-user}
-ES_HOSTS=
+ES_HOSTS=${ES_HOSTS:=localhost}
 
 # N.B. - we are assuming that maprfs:///apps is mounted
 # on /apps on the POSIX client machines.

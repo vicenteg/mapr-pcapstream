@@ -3,7 +3,8 @@
 home=$(dirname $0)
 . "$home/env.sh"
 
-mkdir -p `date +$NFS_CAPTURE_DIR_FORMAT`
+sudo mkdir -p `date +$NFS_CAPTURE_DIR_FORMAT`
+sudo chown -R $USER `date +$NFS_CAPTURE_DIR_FORMAT`
 
 # Create captures in a directory hierarchy for the date. Lets us find
 # captures by date later.

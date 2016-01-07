@@ -1,33 +1,63 @@
 package com.mapr.pcapstream
 
-import java.util.Date
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
+import java.util.Date
 
+import net.ripe.hadoop.pcap.io.PcapInputFormat
+import net.ripe.hadoop.pcap.packet.Packet
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark._
 
-import org.apache.hadoop.io.{BytesWritable, NullWritable}
+import org.apache.hadoop.io.{LongWritable, ObjectWritable}
 import org.apache.hadoop.mapred.FileInputFormat
 import org.apache.hadoop.mapred.JobConf
 
 import org.elasticsearch.spark._
 
-import com.mapr.sample.WholeFileInputFormat
-import edu.gatech.sjpcap._
-
 object PcapStream {
-  case class FlowData(timestampMillis: Long, srcIP: String, dstIP: String, srcPort: Integer, dstPort: Integer, protocol: String, length: Integer, payload: Array[Byte], captureFilename: String)
+  case class IPFlags(ipFlagsDf: Boolean,
+                     ipFlagsMf: Boolean)
+
+  case class TCPFlags(tcpFlagNs: Boolean,
+                      tcpFlagCwr: Boolean,
+                      tcpFlagEce: Boolean,
+                      tcpFlagUrg: Boolean,
+                      tcpFlagAck: Boolean,
+                      tcpFlagPsh: Boolean,
+                      tcpFlagRst: Boolean,
+                      tcpFlagSyn: Boolean,
+                      tcpFlagFin: Boolean)
+
+  case class PacketSchema(timestamp: Long,
+                          src: String,
+                          srcPort: Int,
+                          dst: String,
+                          dstPort: Int,
+                          protocol: String,
+                          ttl: Int,
+                          ipVersion: Int,
+                          length: Long,
+                          tcpSeq: Long,
+                          tcpAck: Long,
+                          udpSum: Int,
+                          udpLength: Int,
+                          reassembledTcpFragments: String,
+                          reassembledUdpFragments: String,
+                          ipFlags: IPFlags,
+                          tcpFlags: TCPFlags)
+
 
   def main(args: Array[String]) {
     val inputPath = args(0)
     val outputPath = args(1)
     val esNodes = args(2)
 
-    val conf = new SparkConf().setAppName("PCAP Flow Parser")
+    val conf = new SparkConf().setAppName("PCAP Streaming Demo")
     conf.set("es.index.auto.create", "true")
     conf.set("es.nodes", esNodes)
-    val ssc = new StreamingContext(conf, Seconds(20))
+
+    val ssc = new StreamingContext(conf, Seconds(30))
     val sc = ssc.sparkContext
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
     import sqlContext.implicits._
@@ -37,59 +67,62 @@ object PcapStream {
     val directoryFormat = new SimpleDateFormat("'flows'/yyyy/MM/dd/HH/mm/ss")
     val indexFormat = new SimpleDateFormat("'telco'.yyyy.MM.dd/'flows'")
 
-
     val jobConf = new JobConf(sc.hadoopConfiguration)
     jobConf.setJobName("PCAP Stream Processing")
     FileInputFormat.setInputPaths(jobConf, input)
 
-    val pcapBytes = ssc.fileStream[NullWritable, BytesWritable, WholeFileInputFormat](directory = input)
+    val pcapData = ssc.fileStream[LongWritable, ObjectWritable, PcapInputFormat](directory = input)
 
-    val packets = pcapBytes.flatMap {
-        case (filename, packet) =>
-          val pcapParser = new PcapParser()
-          pcapParser.openFile(packet.getBytes)
+    pcapData.map(r => (r._1.get, r._2.get)).foreachRDD(rdd => {
+      val packets = rdd.map(t => {
+        t._2 match {
+          case p: Packet => p
+          case _ => throw new ClassCastException
+        }
+      })
+      val packetSchema = packets.map(packet => {
+        new PacketSchema(
+          timestamp = (packet.get(Packet.TIMESTAMP).asInstanceOf[Long] * 1000) + (packet.get(Packet.TIMESTAMP_MICROS).asInstanceOf[Long] / 1000),
+          src = packet.get(Packet.SRC).asInstanceOf[String],
+          srcPort = packet.get(Packet.SRC_PORT).asInstanceOf[Int],
+          dst = packet.get(Packet.DST).asInstanceOf[String],
+          dstPort = packet.get(Packet.DST_PORT).asInstanceOf[Int],
+          protocol = packet.get(Packet.PROTOCOL).asInstanceOf[String],
+          ttl = packet.get(Packet.TTL).asInstanceOf[Int],
+          ipVersion = packet.get(Packet.IP_VERSION).asInstanceOf[Int],
+          length = packet.get(Packet.LEN).asInstanceOf[Int],
+          tcpSeq = packet.get(Packet.TCP_SEQ).asInstanceOf[Long],
+          tcpAck = packet.get(Packet.TCP_ACK).asInstanceOf[Long],
+          udpSum = packet.get(Packet.UDPSUM).asInstanceOf[Int],
+          udpLength = packet.get(Packet.UDP_LENGTH).asInstanceOf[Int],
+          reassembledTcpFragments = packet.get(Packet.REASSEMBLED_TCP_FRAGMENTS).asInstanceOf[String],
+          reassembledUdpFragments = packet.get(Packet.REASSEMBLED_DATAGRAM_FRAGMENTS).asInstanceOf[String],
+          new IPFlags(ipFlagsDf = packet.get(Packet.IP_FLAGS_DF).asInstanceOf[Boolean],
+            ipFlagsMf = packet.get(Packet.IP_FLAGS_MF).asInstanceOf[Boolean]),
+          new TCPFlags(tcpFlagNs = packet.get(Packet.TCP_FLAG_NS).asInstanceOf[Boolean],
+            tcpFlagCwr = packet.get(Packet.TCP_FLAG_CWR).asInstanceOf[Boolean],
+            tcpFlagEce = packet.get(Packet.TCP_FLAG_ECE).asInstanceOf[Boolean],
+            tcpFlagUrg = packet.get(Packet.TCP_FLAG_URG).asInstanceOf[Boolean],
+            tcpFlagAck = packet.get(Packet.TCP_FLAG_ACK).asInstanceOf[Boolean],
+            tcpFlagPsh = packet.get(Packet.TCP_FLAG_PSH).asInstanceOf[Boolean],
+            tcpFlagRst = packet.get(Packet.TCP_FLAG_RST).asInstanceOf[Boolean],
+            tcpFlagFin = packet.get(Packet.TCP_FLAG_FIN).asInstanceOf[Boolean],
+            tcpFlagSyn = packet.get(Packet.TCP_FLAG_SYN).asInstanceOf[Boolean]))
+      })
 
-          val pcapIterator = new PcapIterator(pcapParser)
-          for (flowData <- pcapIterator.toList if flowData != None)
-            yield (flowData.get)
-    }
+      val date = new Date()
+      val out = Paths.get(outputPath, directoryFormat.format(date)).toString
 
-    packets.foreachRDD(rdd => {
-      if (rdd.count() > 0) {
-        val date = new Date()
-        val out = Paths.get(outputPath, directoryFormat.format(date)).toString
-        val df = sqlContext.createDataFrame(rdd)
-        df.write.parquet(out)
-        rdd.saveToEs(indexFormat.format(date))
-      }
+      packetSchema.saveToEs(indexFormat.format(date))
+      val df = packetSchema.toDF()
+      df.show(10)
+      df.write.parquet(out)
+
+      LogHolder.log.info(s"${rdd.count} packets in $rdd")
+      LogHolder.log.info(s"${packetSchema.count} packets in $packetSchema")
     })
 
     ssc.start()
     ssc.awaitTermination()
-  }
-
-  class PcapIterator(pcapParser: PcapParser, filename: String = "") extends Iterator[Option[FlowData]] {
-    private var _headerMap: Option[FlowData] = None
-
-    def next() = {
-        _headerMap
-    }
-
-    def hasNext: Boolean = {
-      val packet = pcapParser.getPacket
-      if (packet == Packet.EOF)
-        _headerMap = None
-      else
-        _headerMap = extractFlowData(packet, Some(filename))
-      packet != Packet.EOF
-    }
-  }
-
-  def extractFlowData(packet: Packet, filename: Option[String] = Some("")): Option[FlowData] = {
-    packet match {
-      case t: TCPPacket => Some(new FlowData(t.timestamp, t.src_ip.getHostAddress(), t.dst_ip.getHostAddress(), t.src_port, t.dst_port, "TCP", t.data.length, t.data, filename.get))
-      case u: UDPPacket => Some(new FlowData(u.timestamp, u.src_ip.getHostAddress(), u.dst_ip.getHostAddress(), u.src_port, u.dst_port, "UDP", u.data.length, u.data, filename.get))
-      case _ => None
-    }
   }
 }
