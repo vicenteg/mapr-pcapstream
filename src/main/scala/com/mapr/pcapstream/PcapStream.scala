@@ -3,6 +3,7 @@ package com.mapr.pcapstream
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.Date
+import org.joda.time._
 
 import net.ripe.hadoop.pcap.io.PcapInputFormat
 import net.ripe.hadoop.pcap.packet.Packet
@@ -30,6 +31,11 @@ object PcapStream {
                       tcpFlagFin: Boolean)
 
   case class PacketSchema(timestamp: Long,
+                         year: Int,
+                         month: Int,
+                         day: Int,
+                         hour: Int,
+                         minute: Int,
                           src: String,
                           srcPort: Int,
                           dst: String,
@@ -81,8 +87,16 @@ object PcapStream {
         }
       })
       val packetSchema = packets.map(packet => {
+        val timestamp = (packet.get(Packet.TIMESTAMP).asInstanceOf[Long] * 1000) + (packet.get(Packet.TIMESTAMP_MICROS).asInstanceOf[Long] / 1000)
+        val dateTime = new DateTime(timestamp)
+
         new PacketSchema(
-          timestamp = (packet.get(Packet.TIMESTAMP).asInstanceOf[Long] * 1000) + (packet.get(Packet.TIMESTAMP_MICROS).asInstanceOf[Long] / 1000),
+          timestamp = timestamp,
+          year = dateTime.year().get,
+          month = dateTime.monthOfYear().get,
+          day = dateTime.dayOfMonth().get,
+          hour = dateTime.hourOfDay().get,
+          minute = dateTime.minuteOfHour().get,
           src = packet.get(Packet.SRC).asInstanceOf[String],
           srcPort = packet.get(Packet.SRC_PORT).asInstanceOf[Int],
           dst = packet.get(Packet.DST).asInstanceOf[String],

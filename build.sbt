@@ -18,6 +18,8 @@ libraryDependencies += "org.apache.spark" % "spark-sql_2.10" % "1.5.2"
 
 libraryDependencies += "org.elasticsearch" % "elasticsearch-spark_2.10" % "2.2.0-m1"
 
+libraryDependencies += "joda-time" % "joda-time" % "2.9.1"
+
 scalacOptions += "-deprecation"
 
 
