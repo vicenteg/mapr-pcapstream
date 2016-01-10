@@ -31,11 +31,11 @@ object PcapStream {
                       tcpFlagFin: Boolean)
 
   case class PacketSchema(timestamp: Long,
-                         year: Int,
-                         month: Int,
-                         day: Int,
-                         hour: Int,
-                         minute: Int,
+                          year: Int,
+                          month: Int,
+                          day: Int,
+                          hour: Int,
+                          minute: Int,
                           src: String,
                           srcPort: Int,
                           dst: String,
@@ -69,7 +69,6 @@ object PcapStream {
     import sqlContext.implicits._
 
     val input = inputPath
-    val output = outputPath
     val directoryFormat = new SimpleDateFormat("'flows'/yyyy/MM/dd/HH/mm/ss")
     val indexFormat = new SimpleDateFormat("'telco'.yyyy.MM.dd/'flows'")
 
