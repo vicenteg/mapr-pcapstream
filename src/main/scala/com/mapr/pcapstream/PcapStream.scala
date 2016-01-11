@@ -128,8 +128,7 @@ object PcapStream {
 
       packetSchema.saveToEs(indexFormat.format(date))
       val df = packetSchema.toDF()
-      df.show(10)
-      df.write.parquet(out)
+      df.write.partitionBy("year", "month", "day", "hour", "minute").parquet(outputPath)
 
       LogHolder.log.info(s"${rdd.count} packets in $rdd")
       LogHolder.log.info(s"${packetSchema.count} packets in $packetSchema")
