@@ -1,8 +1,6 @@
 package com.mapr.pcapstream
 
 import java.nio.file.Paths
-import java.text.SimpleDateFormat
-import java.util.Date
 import org.joda.time._
 
 import net.ripe.hadoop.pcap.io.PcapInputFormat
@@ -15,6 +13,7 @@ import org.apache.hadoop.mapred.FileInputFormat
 import org.apache.hadoop.mapred.JobConf
 
 import org.elasticsearch.spark._
+import org.joda.time.format.DateTimeFormat
 
 object PcapStream {
   case class IPFlags(ipFlagsDf: Boolean,
@@ -69,8 +68,6 @@ object PcapStream {
     import sqlContext.implicits._
 
     val input = inputPath
-    val directoryFormat = new SimpleDateFormat("'flows'/yyyy/MM/dd/HH/mm/ss")
-    val indexFormat = new SimpleDateFormat("'telco'.yyyy.MM.dd/'flows'")
 
     val jobConf = new JobConf(sc.hadoopConfiguration)
     jobConf.setJobName("PCAP Stream Processing")
@@ -123,12 +120,13 @@ object PcapStream {
             tcpFlagSyn = packet.get(Packet.TCP_FLAG_SYN).asInstanceOf[Boolean]))
       })
 
-      val date = new Date()
-      val out = Paths.get(outputPath, directoryFormat.format(date)).toString
+      val dateTime = new DateTime()
+      val out = Paths.get(outputPath, dateTime.getMillis.toString).toString
+      val fmt = DateTimeFormat.forPattern("'telco'.yyyy.MM.dd/'flows'")
 
-      packetSchema.saveToEs(indexFormat.format(date))
+      packetSchema.saveToEs(fmt.print(dateTime))
       val df = packetSchema.toDF()
-      df.write.partitionBy("year", "month", "day", "hour", "minute").parquet(outputPath)
+      df.write.parquet(out)
 
       LogHolder.log.info(s"${rdd.count} packets in $rdd")
       LogHolder.log.info(s"${packetSchema.count} packets in $packetSchema")
