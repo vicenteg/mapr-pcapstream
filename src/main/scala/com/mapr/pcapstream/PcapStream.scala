@@ -58,11 +58,14 @@ object PcapStream {
     val outputPath = args(1)
     val esNodes = args(2)
 
-    val conf = new SparkConf().setAppName("PCAP Streaming Demo")
+    val conf = new SparkConf().setAppName("PcapStreamingDemo")
     conf.set("es.index.auto.create", "true")
     conf.set("es.nodes", esNodes)
 
-    val ssc = new StreamingContext(conf, Seconds(30))
+    val ssc = StreamingContext.getOrCreate("/apps/spark/checkpoints/PcapStreamingDemo", () => {
+      new StreamingContext(conf, Seconds(30))
+    })
+
     val sc = ssc.sparkContext
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
     import sqlContext.implicits._
