@@ -73,7 +73,7 @@ object PcapStream {
     val input = inputPath
 
     val jobConf = new JobConf(sc.hadoopConfiguration)
-    jobConf.setJobName("PCAP Stream Processing")
+    jobConf.setJobName("PcapStreamingDemo")
     FileInputFormat.setInputPaths(jobConf, input)
 
     val pcapData = ssc.fileStream[LongWritable, ObjectWritable, PcapInputFormat](directory = input)

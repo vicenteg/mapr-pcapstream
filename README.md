@@ -68,7 +68,7 @@ PUT _template/telco
           "type": "string",
           "index": "not_analyzed"
         },
-        "@timestamp": {
+        "timestamp": {
           "type": "date"
         }
       }
