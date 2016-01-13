@@ -216,11 +216,17 @@ the data available to BI tools via Drill? Fire up sqlline and try
 something like this on the output directory:
 
 ```sql
-select count(1) from dfs.`/apps/pcap/out/flows`;
+select count(1) from dfs.`/apps/pcap/out`;
 ```
 
 Run it a few times, and see that the count changes. That's of course
 because we're creating new Parquet files with each streaming batch.
+
+Now print out the number of packets we've seen to date, with the latest timestamp:
+
+```sql
+select to_timestamp(max(`timestamp`)/1000) as asOf,count(1) as packetCount from dfs.`/apps/pcap/out`;
+```
 
 Some aggregations by protocol:
 
@@ -230,7 +236,7 @@ select
     count(*) as packets,
     max(length) as maxLength,
     avg(length) as avgLength 
-  from dfs.`/apps/pcap/out/flows`
+  from dfs.`/apps/pcap/out`
   group by protocol;
 ```
 
@@ -248,7 +254,7 @@ select
     length,
     count(*) over(partition by `timestamp`) as countPerMilli,
     avg(length) over(partition by `timestamp`) as avgLengthPerMilli 
-  from dfs.`/apps/pcap/out/flows`;
+  from dfs.`/apps/pcap/out`;
 ```
 
 # TODO
