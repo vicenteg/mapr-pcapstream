@@ -19,12 +19,11 @@ SIZE_LIMIT=512
 
 USER=${USER:=ec2-user}
 ES_HOSTS=${ES_HOSTS:=localhost}
+CLUSTER_NAME=${CLUSTER_NAME:=telco.mapr.com}
 
-# N.B. - we are assuming that maprfs:///apps is mounted
-# on /apps on the POSIX client machines.
-MFS_CAPTURE_DIR_FORMAT="/apps/pcap/in/%Y/%m/%d"
+MFS_CAPTURE_DIR_FORMAT="/mapr/$CLUSTER_NAME/apps/pcap/in/%Y/%m/%d"
 NFS_CAPTURE_DIR_FORMAT="$MFS_CAPTURE_DIR_FORMAT"
-MFS_OUTPUT_DIR="/apps/pcap/out"
+MFS_OUTPUT_DIR="/mapr/$CLUSTER_NAME/apps/pcap/out"
 NFS_OUTPUT_DIR="$MFS_OUTPUT_DIR"
 CAPTURE_FILE_PREFIX=".dump-$(hostname)"
 CAPTURE_FILE_FORMAT="$CAPTURE_FILE_PREFIX-%Y-%m-%d_%H_%M_%S.pcap"
