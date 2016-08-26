@@ -10,13 +10,13 @@ resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/release
 
 libraryDependencies += "com.typesafe.akka" % "akka-actor_2.10" % "2.3.14"
 
-libraryDependencies += "org.apache.spark" % "spark-streaming_2.10" % "1.5.2"
+libraryDependencies += "org.apache.spark" % "spark-streaming_2.10" % "1.6.1"
 
-libraryDependencies += "org.apache.spark" %% "spark-core" % "1.5.2"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "1.6.1"
 
-libraryDependencies += "org.apache.spark" % "spark-sql_2.10" % "1.5.2"
+libraryDependencies += "org.apache.spark" % "spark-sql_2.10" % "1.6.1"
 
-libraryDependencies += "org.elasticsearch" % "elasticsearch-spark_2.10" % "2.2.0-m1"
+libraryDependencies += "org.elasticsearch" % "elasticsearch-spark_2.10" % "2.2.0"
 
 libraryDependencies += "joda-time" % "joda-time" % "2.9.1"
 
