@@ -16,7 +16,7 @@ libraryDependencies += "org.apache.spark" %% "spark-core" % "1.6.1"
 
 libraryDependencies += "org.apache.spark" % "spark-sql_2.10" % "1.6.1"
 
-libraryDependencies += "org.elasticsearch" % "elasticsearch-spark_2.10" % "2.2.0"
+libraryDependencies += "org.elasticsearch" % "elasticsearch-spark_2.10" % "2.3.3"
 
 libraryDependencies += "joda-time" % "joda-time" % "2.9.1"
 
