@@ -57,13 +57,14 @@ object PcapStream {
     val inputPath = args(0)
     val outputPath = args(1)
     val esNodes = args(2)
+    val interval = args(3).toInt
 
     val conf = new SparkConf().setAppName("PcapStreamingDemo")
     conf.set("es.index.auto.create", "true")
     conf.set("es.nodes", esNodes)
 
     val ssc = StreamingContext.getOrCreate("/apps/spark/checkpoints/PcapStreamingDemo", () => {
-      new StreamingContext(conf, Seconds(30))
+      new StreamingContext(conf, Seconds(interval))
     })
 
     val sc = ssc.sparkContext

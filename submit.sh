@@ -13,6 +13,6 @@ $SPARK_SUBMIT \
     --jars lib_managed/jars/org.elasticsearch/elasticsearch-spark_2.10/elasticsearch-spark_2.10-2.3.3.jar,lib_unmanaged/hadoop-pcap-serde-1.2-SNAPSHOT-jar-with-dependencies.jar,lib_managed/jars/joda-time/joda-time/joda-time-2.9.1.jar \
     --master $SPARK_MASTER \
     --num-executors 15 \
-    --executor-cores 3 \
-    --executor-memory 6G \
-    target/scala-2.10/pcapstream_2.10-1.0.jar `date +$MFS_CAPTURE_DIR_FORMAT` $MFS_OUTPUT_DIR "$ES_HOSTS")
+    --executor-cores 2 \
+    --executor-memory 3G \
+    target/scala-2.10/pcapstream_2.10-1.0.jar `date +$MFS_CAPTURE_DIR_FORMAT` $MFS_OUTPUT_DIR "$ES_HOSTS" 90)
