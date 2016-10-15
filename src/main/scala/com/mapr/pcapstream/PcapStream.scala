@@ -1,6 +1,6 @@
 package com.mapr.pcapstream
 
-import java.nio.file.Paths
+import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
 import org.joda.time._
 
 import net.ripe.hadoop.pcap.io.PcapInputFormat
@@ -12,12 +12,11 @@ import org.apache.hadoop.io.{LongWritable, ObjectWritable}
 import org.apache.hadoop.mapred.FileInputFormat
 import org.apache.hadoop.mapred.JobConf
 
-import org.elasticsearch.spark._
-import org.joda.time.format.DateTimeFormat
+import org.apache.spark.streaming.kafka.producer._
 
 object PcapStream {
   case class IPFlags(ipFlagsDf: Boolean,
-                     ipFlagsMf: Boolean)
+                     ipFlagsMf: Boolean) extends Serializable
 
   case class TCPFlags(tcpFlagNs: Boolean,
                       tcpFlagCwr: Boolean,
@@ -27,7 +26,7 @@ object PcapStream {
                       tcpFlagPsh: Boolean,
                       tcpFlagRst: Boolean,
                       tcpFlagSyn: Boolean,
-                      tcpFlagFin: Boolean)
+                      tcpFlagFin: Boolean) extends Serializable
 
   case class PacketSchema(timestamp: Long,
                           year: Int,
@@ -50,26 +49,23 @@ object PcapStream {
                           reassembledTcpFragments: String,
                           reassembledUdpFragments: String,
                           ipFlags: IPFlags,
-                          tcpFlags: TCPFlags)
+                          tcpFlags: TCPFlags) extends Serializable
 
 
   def main(args: Array[String]) {
     val inputPath = args(0)
     val outputPath = args(1)
-    val esNodes = args(2)
+
+    val kafkaBrokers = "host:port,host:port"
+    val producerConf = new ProducerConf(bootstrapServers = kafkaBrokers.split(",").toList)
 
     val conf = new SparkConf().setAppName("PcapStreamingDemo")
-    conf.set("es.index.auto.create", "true")
-    conf.set("es.nodes", esNodes)
 
     val ssc = StreamingContext.getOrCreate("/apps/spark/checkpoints/PcapStreamingDemo", () => {
       new StreamingContext(conf, Seconds(30))
     })
 
     val sc = ssc.sparkContext
-    val sqlContext = new org.apache.spark.sql.SQLContext(sc)
-    import sqlContext.implicits._
-
     val input = inputPath
 
     val jobConf = new JobConf(sc.hadoopConfiguration)
@@ -123,13 +119,7 @@ object PcapStream {
             tcpFlagSyn = packet.get(Packet.TCP_FLAG_SYN).asInstanceOf[Boolean]))
       })
 
-      val dateTime = new DateTime()
-      val out = Paths.get(outputPath, dateTime.getMillis.toString).toString
-      val fmt = DateTimeFormat.forPattern("'telco'.yyyy.MM.dd/'flows'")
-
-      packetSchema.saveToEs(fmt.print(dateTime))
-      val df = packetSchema.toDF()
-      df.write.parquet(out)
+      packetSchema.sendToKafka[JsonSerializer]("/apps/pcap/stream:in", producerConf)
 
       LogHolder.log.info(s"${rdd.count} packets in $rdd")
       LogHolder.log.info(s"${packetSchema.count} packets in $packetSchema")
