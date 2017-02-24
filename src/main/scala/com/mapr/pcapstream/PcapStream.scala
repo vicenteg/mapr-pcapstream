@@ -1,18 +1,16 @@
 package com.mapr.pcapstream
 
-import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
 import org.joda.time._
-
 import net.ripe.hadoop.pcap.io.PcapInputFormat
 import net.ripe.hadoop.pcap.packet.Packet
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark._
-
 import org.apache.hadoop.io.{LongWritable, ObjectWritable}
 import org.apache.hadoop.mapred.FileInputFormat
 import org.apache.hadoop.mapred.JobConf
-
-import org.apache.spark.streaming.kafka.producer._
+import org.apache.spark.sql.{SQLContext, SparkSession}
+import org.elasticsearch.spark.rdd.EsSpark
+import org.joda.time.format.DateTimeFormat
 
 object PcapStream {
   case class IPFlags(ipFlagsDf: Boolean,
@@ -55,18 +53,23 @@ object PcapStream {
   def main(args: Array[String]) {
     val inputPath = args(0)
     val outputPath = args(1)
-    val interval = args(2).toInt
+    val esNodes = args(2)
+    val interval = args(3).toInt
 
     val kafkaBrokers = "host:port,host:port"
-    val producerConf = new ProducerConf(bootstrapServers = kafkaBrokers.split(",").toList)
 
     val conf = new SparkConf().setAppName("PcapStreamingDemo")
+    conf.set("es.index.auto.create", "true")
+    conf.set("es.nodes", esNodes)
 
     val ssc = StreamingContext.getOrCreate("/apps/spark/checkpoints/PcapStreamingDemo", () => {
       new StreamingContext(conf, Seconds(interval))
     })
 
     val sc = ssc.sparkContext
+    val sqlContext = SparkSession.builder().getOrCreate().sqlContext
+    import sqlContext.implicits._
+
     val input = inputPath
 
     val jobConf = new JobConf(sc.hadoopConfiguration)
@@ -120,7 +123,10 @@ object PcapStream {
             tcpFlagSyn = packet.get(Packet.TCP_FLAG_SYN).asInstanceOf[Boolean]))
       })
 
-      packetSchema.sendToKafka[JsonSerializer]("/apps/pcap/stream:in", producerConf)
+      val fmt = DateTimeFormat.forPattern("'telco'.yyyy.MM.dd/'flows'")
+      val dateTime = new DateTime()
+
+      EsSpark.saveToEs(packetSchema, fmt.print(dateTime))
 
       LogHolder.log.info(s"${rdd.count} packets in $rdd")
       LogHolder.log.info(s"${packetSchema.count} packets in $packetSchema")
